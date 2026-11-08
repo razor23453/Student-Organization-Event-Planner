@@ -1,0 +1,863 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Student Org Event Planner</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231F2A4D'/%3E%3Crect x='10' y='16' width='44' height='38' rx='6' fill='%23fff'/%3E%3Crect x='10' y='16' width='44' height='11' rx='5' fill='%23EB6834'/%3E%3Ccircle cx='24' cy='40' r='4' fill='%231F2A4D'/%3E%3C/svg%3E">
+<style>
+:root{
+  --navy:#1F2A4D; --navy2:#2C3B6B; --orange:#EB6834; --bg:#F5F3EE; --card:#fff; --ink:#1E2433; --mute:#667085; --line:#E3E0D8;
+  --input:#FFF6CC; --red:#C8372D; --redbg:#FDECEA; --amber:#B26A00; --amberbg:#FFF1D6; --green:#2E7D4F; --greenbg:#E4F4EA;
+  --blue:#2F5DA8; --bluebg:#E6EEFA; --teal:#127A78; --tealbg:#DFF3F1; --violet:#6A4BA8; --violetbg:#EEE8F8; --grey:#6B7280; --greybg:#EEF0F3;
+  --radius:14px; --shadow:0 1px 2px rgba(31,42,77,.06),0 6px 18px rgba(31,42,77,.06);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{margin:0;line-height:1.2}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+
+/* header */
+.top{background:var(--navy);color:#fff;border-bottom:4px solid var(--orange)}
+.top .wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding-top:14px;padding-bottom:12px}
+.brand{display:flex;flex-direction:column}
+.brand h1{font-size:21px;letter-spacing:.2px}
+.brand small{opacity:.75;font-size:12.5px}
+.tabs{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
+.tab{background:transparent;border:0;color:#dfe5ff;padding:9px 15px;border-radius:999px;cursor:pointer;font-weight:600}
+.tab:hover{background:rgba(255,255,255,.1)}
+.tab[aria-current="page"]{background:#fff;color:var(--navy)}
+.sync{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#dfe5ff}
+.dot{width:9px;height:9px;border-radius:50%;background:#f0b429;display:inline-block}
+.dot.live{background:#3ecf8e}.dot.err{background:#ff6b5e}.dot.busy{background:#8ab4ff;animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.35}}
+main{padding:22px 0 60px}
+.banner{background:var(--amberbg);border:1px solid #f1d28b;color:#6b4300;padding:10px 14px;border-radius:12px;margin-bottom:16px;font-size:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.banner.bad{background:var(--redbg);border-color:#f2b9b3;color:#7e1f18}
+.banner button{margin-left:auto}
+
+/* buttons + inputs */
+.btn{background:var(--navy);color:#fff;border:1px solid var(--navy);border-radius:10px;padding:9px 16px;font-weight:600;cursor:pointer}
+.btn:hover{background:var(--navy2)}
+.btn.orange{background:var(--orange);border-color:var(--orange)}
+.btn.orange:hover{background:#d85a29}
+.btn.ghost{background:#fff;color:var(--navy);border-color:var(--line)}
+.btn.ghost:hover{background:#f3f1eb}
+.btn.danger{background:#fff;color:var(--red);border-color:#f0b9b4}
+.btn.danger:hover{background:var(--redbg)}
+.btn.small{padding:5px 10px;font-size:13px;border-radius:8px}
+.btn[disabled]{opacity:.55;cursor:default}
+:focus-visible{outline:3px solid #7aa2ff;outline-offset:2px}
+input,select,textarea{width:100%;border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 10px}
+input.y,select.y,textarea.y{background:var(--input);border-color:#e9d98a}
+textarea{min-height:70px;resize:vertical}
+label{display:block;font-weight:600;font-size:13px;margin-bottom:4px}
+.err{color:var(--red);font-size:12.5px;margin-top:3px}
+.hint{color:var(--mute);font-size:12.5px;margin-top:3px}
+
+/* cards */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+.card h2{font-size:16px;margin-bottom:12px;color:var(--navy)}
+.card h2 small{font-weight:400;color:var(--mute);font-size:12.5px;margin-left:6px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.grid2>*,.grid3>*{min-width:0}
+.stack>*+*{margin-top:16px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-bottom:16px}
+.toolbar .f{min-width:200px;flex:1;max-width:300px}
+.toolbar .grow{flex:1}
+.pagehead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.pagehead h2{font-size:22px;color:var(--navy)}
+.pagehead .sub{color:var(--mute)}
+
+/* tiles */
+.tiles{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:16px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 14px 12px;box-shadow:var(--shadow);border-top:4px solid var(--navy)}
+.tile.o{border-top-color:var(--orange)}.tile.g{border-top-color:var(--green)}.tile.r{border-top-color:var(--red)}.tile.b{border-top-color:var(--blue)}.tile.t{border-top-color:var(--teal)}
+.tile .l{font-size:12.5px;color:var(--mute);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.tile .n{font-size:32px;font-weight:700;color:var(--navy);line-height:1.15;margin-top:2px}
+.tile .d{font-size:12.5px;color:var(--mute);margin-top:2px}
+
+/* chips */
+.chip{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
+.st-Planned{background:var(--bluebg);color:var(--blue)}
+.st-Confirmed{background:var(--tealbg);color:var(--teal)}
+.st-InProgress{background:var(--violetbg);color:var(--violet)}
+.st-Completed{background:var(--greenbg);color:var(--green)}
+.st-Cancelled{background:var(--greybg);color:var(--grey);text-decoration:line-through}
+.al-red{background:var(--redbg);color:var(--red)}
+.al-amber{background:var(--amberbg);color:var(--amber)}
+
+/* lists */
+.list{list-style:none;margin:0;padding:0}
+.list li{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.list li:last-child{border-bottom:0}
+.list .date{flex:0 0 58px;text-align:center;background:var(--bg);border-radius:10px;padding:4px 0;line-height:1.1}
+.list .date b{display:block;font-size:20px;color:var(--navy)}
+.list .date span{font-size:11px;text-transform:uppercase;color:var(--mute);font-weight:700}
+.list .main{flex:1;min-width:0}
+.list .main b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.list .main small{color:var(--mute)}
+.list .go{background:none;border:0;cursor:pointer;color:var(--navy);padding:6px;border-radius:8px}
+.list .go:hover{background:var(--bg)}
+.empty{color:var(--mute);padding:26px 8px;text-align:center;background:var(--bg);border-radius:10px;font-size:14px}
+
+/* charts */
+svg{width:100%;height:auto;display:block}
+svg .grid{stroke:#e8e5de;stroke-width:1}
+svg .axis{fill:var(--mute);font-size:11px}
+svg .val{fill:var(--navy);font-size:11px;font-weight:700}
+svg .bar{fill:var(--orange)}
+.hbars{display:flex;flex-direction:column;gap:7px}
+.hrow,.prow{display:grid;grid-template-columns:minmax(80px,150px) 1fr 84px;gap:10px;align-items:center;font-size:13px}
+.hl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}
+.ht{display:block;background:#eeece6;border-radius:6px;height:12px;overflow:hidden}
+.ht i{display:block;height:100%;background:var(--navy);border-radius:6px}
+.hrow b,.prow b{text-align:right;color:var(--navy)}
+.prow b{white-space:nowrap}.prow b em{display:block;font-style:normal;color:var(--mute);font-weight:600;font-size:12px}
+.pb{display:flex;flex-direction:column;gap:3px}
+.pb .ht{height:8px}
+.ht i.exp{background:#b9c3e6}.ht i.came{background:var(--orange)}
+.legend{display:flex;gap:16px;margin-top:10px;font-size:12.5px;color:var(--mute)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;background:#b9c3e6}
+.legend i.came{background:var(--orange)}
+.statusbar{display:flex;height:16px;border-radius:8px;overflow:hidden;background:#eeece6}
+.statusbar span{display:block;height:100%}
+.sb-Planned{background:#7fa3dd}.sb-Confirmed{background:#3fb3ae}.sb-InProgress{background:#9b82d4}.sb-Completed{background:#4caf75}.sb-Cancelled{background:#b4bac4}
+.slegend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:13px}
+.slegend span{display:inline-flex;align-items:center;gap:6px}
+.slegend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+/* calendar */
+.cal{background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+.cal-head,.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.cal-head div{background:var(--navy);color:#fff;text-align:center;padding:8px 0;font-weight:700;font-size:12.5px;letter-spacing:.4px}
+.day{min-height:112px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:5px;cursor:pointer;background:#fff;position:relative;text-align:left;border-top:0;border-left:0;display:block;width:100%}
+.day:nth-child(7n){border-right:0}
+.day:hover{background:#fbfaf6}
+.day.out{background:#f7f6f2;color:#a3a7b0}
+.day.out .evt{opacity:.7}
+.day .num{font-size:12.5px;font-weight:700;display:inline-block;min-width:24px;height:24px;line-height:24px;text-align:center;border-radius:50%}
+.day.today .num{background:var(--orange);color:#fff}
+.evt{display:block;margin-top:3px;padding:2px 6px;border-radius:6px;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-left:3px solid currentColor}
+.more{display:block;margin-top:3px;font-size:12px;color:var(--mute);font-weight:700;padding-left:4px}
+.legendrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;font-size:13px;align-items:center}
+
+/* table */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:#fff;box-shadow:var(--shadow)}
+table{border-collapse:collapse;width:100%;min-width:900px;font-size:14px}
+th{background:var(--navy);color:#fff;text-align:left;padding:10px 12px;font-size:12.5px;letter-spacing:.3px;position:sticky;top:0;white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:nth-child(even) td{background:#fbfaf7}
+tr.cancelled td:first-child{text-decoration:line-through;color:var(--grey)}
+td.nw{white-space:nowrap}
+td.num,th.num{text-align:right}
+.rowbtns{display:flex;gap:6px;justify-content:flex-end}
+
+/* dialog */
+dialog{border:0;border-radius:18px;padding:0;width:min(640px,94vw);box-shadow:0 20px 60px rgba(20,25,50,.35);max-height:92vh}
+dialog::backdrop{background:rgba(20,28,55,.5)}
+.dlg-h{background:var(--navy);color:#fff;padding:14px 20px;border-bottom:4px solid var(--orange);display:flex;align-items:center}
+.dlg-h h3{font-size:18px}
+.dlg-h button{margin-left:auto;background:none;border:0;color:#fff;font-size:22px;cursor:pointer;line-height:1}
+.dlg-b{padding:18px 20px;overflow:auto;max-height:calc(92vh - 140px)}
+.dlg-f{padding:12px 20px 16px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--line);flex-wrap:wrap}
+.dlg-f .left{margin-right:auto}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px}
+.form .full{grid-column:1/-1}
+
+/* settings */
+.listedit{display:flex;flex-direction:column;gap:6px}
+.listedit .r{display:flex;gap:6px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 18px;border-radius:999px;box-shadow:var(--shadow);z-index:99;font-weight:600;max-width:92vw}
+.toast.bad{background:var(--red)}
+.sr{position:absolute;left:-9999px}
+
+@media (max-width:1000px){.tiles{grid-template-columns:repeat(3,1fr)}.grid2,.grid3{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:620px){
+  .wrap{padding:0 14px}
+  .tabs{margin-left:0;width:100%}.tab{flex:1;padding:9px 6px;font-size:14px;text-align:center}
+  .tiles{grid-template-columns:repeat(2,1fr)}
+  .tile .n{font-size:26px}
+  .form{grid-template-columns:1fr}
+  .day{min-height:64px;padding:3px}
+  .evt{font-size:0;height:6px;padding:0;border-radius:3px;border-left:0;background:currentColor !important;margin-top:2px}
+  .more{font-size:10px}
+  .hrow,.prow{grid-template-columns:90px 1fr 64px}
+  .toolbar .f{max-width:none;min-width:140px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+
+</style>
+</head>
+<body>
+<div id="app"><p style="padding:30px">Loading…</p></div>
+<noscript><p style="padding:30px">This planner needs JavaScript turned on.</p></noscript>
+<script>
+/* logic.js – the planner's rules (same rules as the Excel workbook). No DOM in here. */
+var Logic = (function () {
+  var STATUSES = ["Planned", "Confirmed", "In Progress", "Completed", "Cancelled"];
+  var OPEN = { "Planned": 1, "Confirmed": 1, "In Progress": 1 };
+  var ALERT = { MISSING: "Missing info", RANGE: "Date out of range", DUP: "Duplicate?", UPDATE: "Update status", SOON: "Coming up" };
+  var MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  var DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  /* ----- dates: "YYYY-MM-DD" text <-> day numbers (UTC, so no time-zone surprises) ----- */
+  function isISO(s) { return /^\d{4}-\d{2}-\d{2}$/.test(s || "") && !isNaN(dayNum(s)) && iso(dayNum(s)) === s; }
+  function dayNum(s) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || "");
+    return m ? Date.UTC(+m[1], +m[2] - 1, +m[3]) / 86400000 : NaN;
+  }
+  function iso(n) {
+    var d = new Date(n * 86400000);
+    return d.getUTCFullYear() + "-" + p2(d.getUTCMonth() + 1) + "-" + p2(d.getUTCDate());
+  }
+  function p2(n) { return (n < 10 ? "0" : "") + n; }
+  function todayISO() { var d = new Date(); return d.getFullYear() + "-" + p2(d.getMonth() + 1) + "-" + p2(d.getDate()); }
+  function addMonths(s, k) { // s = any ISO date; returns first-of-month ISO k months later
+    var y = +s.slice(0, 4), m = +s.slice(5, 7) - 1 + k;
+    y += Math.floor(m / 12); m = ((m % 12) + 12) % 12;
+    return y + "-" + p2(m + 1) + "-01";
+  }
+  function planRange(settings) {
+    var start = isISO(settings.planStart) ? settings.planStart.slice(0, 8) + "01" : addMonths(todayISO(), 0);
+    var end = iso(dayNum(addMonths(start, 12)) - 1);
+    return { start: start, end: end };
+  }
+  function asOf(settings) { return isISO(settings.asOf) ? settings.asOf : todayISO(); }
+  function nice(s) { // "2026-11-08" -> "Nov 8, 2026"
+    if (!isISO(s)) return s || "";
+    return MONTHS[+s.slice(5, 7) - 1].slice(0, 3) + " " + (+s.slice(8, 10)) + ", " + s.slice(0, 4);
+  }
+  function niceTime(t) {
+    var m = /^(\d{1,2}):(\d{2})/.exec(t || "");
+    if (!m) return t || "";
+    var h = +m[1];
+    return ((h + 11) % 12 + 1) + ":" + m[2] + " " + (h < 12 ? "AM" : "PM");
+  }
+
+  /* ----- one event's alert + days until ----- */
+  function annotate(events, settings) {
+    var range = planRange(settings), today = dayNum(asOf(settings)), soon = Number(settings.alertDays);
+    if (!(soon >= 0)) soon = 7;
+    var seen = {};
+    events.forEach(function (e) {
+      var k = norm(e.name) + "|" + e.date;
+      if (norm(e.name) && e.date) seen[k] = (seen[k] || 0) + 1;
+    });
+    return events.map(function (e, i) {
+      var o = {}; for (var k in e) o[k] = e[k];
+      o.row = i;
+      var has = isISO(e.date), dn = has ? dayNum(e.date) : NaN;
+      var isOpen = !!OPEN[e.status];
+      o.daysUntil = has && isOpen ? dn - today : null;
+      o.inPlan = has && e.date >= range.start && e.date <= range.end;
+      var a = "";
+      if (!norm(e.name) && !e.date && !e.category && !e.committee) a = "";
+      else if (!norm(e.name) || !has || !e.category || !e.committee) a = ALERT.MISSING;
+      else if (!o.inPlan) a = ALERT.RANGE;
+      else if (seen[norm(e.name) + "|" + e.date] > 1) a = ALERT.DUP;
+      else if (isOpen && dn < today) a = ALERT.UPDATE;
+      else if (isOpen && dn - today <= soon) a = ALERT.SOON;
+      o.alert = a;
+      return o;
+    });
+  }
+  function norm(s) { return String(s || "").trim().toLowerCase(); }
+  function isRed(a) { return a === ALERT.MISSING || a === ALERT.RANGE || a === ALERT.DUP || a === ALERT.UPDATE; }
+
+  /* ----- everything the dashboard shows ----- */
+  function compute(events, settings, filter) {
+    filter = filter || {};
+    var all = annotate(events, settings);
+    var rows = all.filter(function (e) {
+      return (!filter.committee || e.committee === filter.committee) && (!filter.category || e.category === filter.category);
+    });
+    var plan = rows.filter(function (e) { return e.inPlan; });
+    var range = planRange(settings);
+    var t = { total: plan.length, open: 0, done: 0, fix: 0, expected: 0, came: 0, expectedWithTurnout: 0, turnout: null };
+    var months = [], i;
+    for (i = 0; i < 12; i++) months.push({ label: MONTHS[+addMonths(range.start, i).slice(5, 7) - 1].slice(0, 3), n: 0 });
+    var byCat = {}, byCom = {}, status = {};
+    STATUSES.forEach(function (s) { status[s] = 0; });
+    plan.forEach(function (e) {
+      if (OPEN[e.status]) t.open++;
+      if (e.status === "Completed") t.done++;
+      if (e.alert === ALERT.UPDATE || e.alert === ALERT.MISSING || e.alert === ALERT.DUP) t.fix++;
+      if (isFinite(+e.expected) && e.expected !== "") t.expected += +e.expected;
+      if (e.came !== "" && e.came != null && isFinite(+e.came)) {
+        t.came += +e.came;
+        if (e.expected !== "" && isFinite(+e.expected)) t.expectedWithTurnout += +e.expected;
+      }
+      var mi = (+e.date.slice(0, 4) - +range.start.slice(0, 4)) * 12 + (+e.date.slice(5, 7) - +range.start.slice(5, 7));
+      if (mi >= 0 && mi < 12) months[mi].n++;
+      if (e.category) byCat[e.category] = (byCat[e.category] || 0) + 1;
+      if (e.committee) {
+        var c = byCom[e.committee] || (byCom[e.committee] = { n: 0, expected: 0, came: 0 });
+        c.n++;
+        if (e.came !== "" && e.came != null && e.expected !== "") { c.expected += +e.expected; c.came += +e.came; }
+      }
+      if (status[e.status] != null) status[e.status]++;
+    });
+    if (t.expectedWithTurnout > 0) t.turnout = t.came / t.expectedWithTurnout;
+    var upcoming = plan.filter(function (e) { return OPEN[e.status] && e.daysUntil != null && e.daysUntil >= 0; })
+      .sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : a.row - b.row; }).slice(0, 8);
+    var alerts = plan.filter(function (e) { return e.alert; });
+    return { all: all, rows: rows, plan: plan, tiles: t, months: months, byCat: byCat, byCom: byCom,
+             status: status, upcoming: upcoming, alerts: alerts, range: range, asOf: asOf(settings) };
+  }
+
+  /* ----- the month grid (6 weeks, Sunday or Monday first) ----- */
+  function calendar(events, settings, year, month) { // month 0-11
+    var first = Date.UTC(year, month, 1) / 86400000;
+    var dow = new Date(first * 86400000).getUTCDay();
+    var startMon = String(settings.weekStart).toLowerCase() === "monday";
+    var lead = startMon ? (dow + 6) % 7 : dow;
+    var annotated = annotate(events, settings), byDay = {};
+    annotated.forEach(function (e) {
+      if (!isISO(e.date) || e.status === "Cancelled") return;
+      (byDay[e.date] = byDay[e.date] || []).push(e);
+    });
+    var cells = [], today = asOf(settings);
+    for (var i = 0; i < 42; i++) {
+      var d = iso(first - lead + i);
+      var list = (byDay[d] || []).slice().sort(function (a, b) { return (a.time || "") < (b.time || "") ? -1 : (a.time || "") > (b.time || "") ? 1 : a.row - b.row; });
+      cells.push({ date: d, day: +d.slice(8, 10), outside: +d.slice(5, 7) - 1 !== month, today: d === today, events: list });
+    }
+    var heads = startMon ? DAYS.slice(1).concat(DAYS[0]) : DAYS;
+    return { cells: cells, heads: heads };
+  }
+
+  /* ----- checking the form before saving ----- */
+  function validate(e) {
+    var err = {};
+    if (!String(e.name || "").trim()) err.name = "Give the event a name.";
+    if (!e.date) err.date = "Pick a date.";
+    else if (!isISO(e.date)) err.date = "Use a real date.";
+    ["expected", "came"].forEach(function (k) {
+      var v = e[k];
+      if (v === "" || v == null) return;
+      if (!/^\d+$/.test(String(v))) err[k] = "Use a whole number, 0 or more.";
+    });
+    return err;
+  }
+
+  return { STATUSES: STATUSES, OPEN: OPEN, ALERT: ALERT, MONTHS: MONTHS, annotate: annotate, compute: compute, calendar: calendar,
+           validate: validate, isISO: isISO, dayNum: dayNum, iso: iso, todayISO: todayISO, addMonths: addMonths, planRange: planRange,
+           asOf: asOf, nice: nice, niceTime: niceTime, isRed: isRed };
+})();
+
+
+/* store.js – where the data lives. Demo mode = this browser. Sheets mode = your Google Sheet. */
+var Store = (function () {
+  var DEMO_KEY = "seop.demo.v1", CFG_KEY = "seop.cfg.v1";
+  var mem = {};
+  function lsGet(k) { try { var v = localStorage.getItem(k); return v == null ? mem[k] || null : v; } catch (e) { return mem[k] || null; } }
+  function lsSet(k, v) { mem[k] = v; try { localStorage.setItem(k, v); } catch (e) {} }
+  function lsDel(k) { delete mem[k]; try { localStorage.removeItem(k); } catch (e) {} }
+
+  var DEFAULT_CATEGORIES = ["Meeting", "Workshop", "Seminar", "Fundraiser", "Social", "Community Service", "Competition", "Orientation", "Other"];
+  var DEFAULT_COMMITTEES = ["Supreme Student Council (SSC)", "Information Systems Society (ISS)", "Circle of Public Administration Students (CPAS)",
+    "Junior Social Workers Association of the Philippines (JSWAP)", "Young Entrepreneur Students (YES)", "Appointed Representative of MCC Youth (ARMY)",
+    "Peer Facilitator's Circle", "Espektro De Orguylo (EDEO)", "PULSE"];
+
+  var state = { mode: "demo", events: [], settings: defaultSettings(), busy: false, error: "", lastSync: null, cfg: { url: "", key: "" } };
+  var listeners = [];
+  function emit() { listeners.forEach(function (f) { try { f(state); } catch (e) { console.error(e); } }); }
+  function subscribe(f) { listeners.push(f); }
+  function defaultSettings() {
+    return { orgName: "My Student Organization", planStart: Logic.addMonths(Logic.todayISO(), -5), weekStart: "Sunday", alertDays: 7, asOf: "",
+             categories: DEFAULT_CATEGORIES.slice(), committees: DEFAULT_COMMITTEES.slice() };
+  }
+  function newId() { return "E" + Math.random().toString(36).slice(2, 10); }
+  function clone(x) { return JSON.parse(JSON.stringify(x)); }
+
+  /* 29 sample events, dated relative to today so the demo always has alerts, upcoming events and history */
+  function sampleEvents() {
+    var t = Logic.dayNum(Logic.todayISO());
+    var C = DEFAULT_COMMITTEES, k = DEFAULT_CATEGORIES;
+    var rows = [
+      [-148, "General Assembly", 0, 0, "Completed", 120, 131, "09:00", "Main Hall"],
+      [-141, "Org Orientation for Freshmen", 7, 3, "Completed", 90, 84, "13:00", "Auditorium"],
+      [-133, "Intro to Web Design Workshop", 1, 1, "Completed", 40, 46, "14:00", "Computer Lab 2"],
+      [-126, "Tree Planting Day", 5, 3, "Completed", 60, 72, "07:00", "Campus Garden"],
+      [-118, "Public Policy Forum", 2, 2, "Completed", 80, 77, "10:00", "Room 301"],
+      [-110, "Bake Sale for Books", 3, 4, "Completed", 50, 66, "10:00", "Quad"],
+      [-102, "Peer Listening Training", 1, 6, "Completed", 30, 28, "13:30", "Room 204"],
+      [-95, "Intramurals Opening", 6, 0, "Completed", 200, 214, "08:00", "Gym"],
+      [-88, "Pride Month Talk", 2, 7, "Completed", 70, 82, "15:00", "AVR"],
+      [-80, "Python for Beginners", 1, 1, "Completed", 35, 40, "14:00", "Computer Lab 1"],
+      [-72, "Outreach: School Supplies Drive", 5, 3, "Completed", 45, 38, "09:00", "Barangay Hall"],
+      [-65, "Business Pitch Night", 6, 4, "Completed", 90, 95, "18:00", "Auditorium"],
+      [-58, "Mental Health Awareness Week Kickoff", 2, 8, "Completed", 100, 118, "10:00", "Quad"],
+      [-50, "Cyber Safety Seminar", 2, 1, "Completed", 60, 71, "13:00", "Room 305"],
+      [-43, "Officers' Retreat", 0, 0, "Completed", 25, 25, "08:00", "Camp Venue"],
+      [-36, "Org Fair Booth Day", 4, 0, "Completed", 150, 160, "09:00", "Gym"],
+      [-29, "Career Talk: Local Government", 2, 2, "Completed", 70, 64, "14:00", "Room 301"],
+      [-21, "Thrift Pop-up Fundraiser", 3, 4, "Completed", 80, 92, "11:00", "Quad"],
+      [-9, "Hackathon Planning Meeting", 0, 1, "Confirmed", 20, "", "16:00", "Room 210"],
+      [-4, "Club Photo Day", 4, 0, "Planned", 60, "", "10:00", "Quad"],
+      [2, "Officers' Monthly Meeting", 0, 0, "Confirmed", 25, "", "15:00", "Room 101"],
+      [4, "Peer Facilitators Skill-Share", 1, 6, "Confirmed", 30, "", "13:30", "Room 204"],
+      [9, "Intro to Excel and Sheets", 1, 1, "Planned", 45, "", "14:00", "Computer Lab 2"],
+      [16, "Youth Leadership Summit", 2, 5, "Planned", 120, "", "09:00", "Auditorium"],
+      [24, "Christmas Gift-Giving Drive", 5, 3, "Planned", 70, "", "09:00", "Barangay Hall"],
+      [38, "Year-End Social Night", 4, 0, "Planned", 150, "", "18:00", "Gym"],
+      [-19, "Poster Making Contest", 6, 0, "Planned", 40, "", "", ""],
+      [30, "Thrift Pop-up Fundraiser", 3, 4, "Planned", 80, "", "11:00", "Quad"],
+      [-15, "Alumni Homecoming", 4, -1, "Cancelled", 90, "", "17:00", "Auditorium"]
+    ];
+    var out = rows.map(function (r) {
+      return { id: newId(), name: r[1], category: k[r[2]], date: Logic.iso(t + r[0]), time: r[7], venue: r[8],
+               committee: r[3] < 0 ? "" : C[r[3]], status: r[4], expected: r[5], came: r[6], notes: "" };
+    });
+    out.push({ id: newId(), name: "Thrift Pop-up Fundraiser", category: "Fundraiser", date: Logic.iso(t + 30), time: "11:00", venue: "Quad",
+               committee: C[4], status: "Planned", expected: 80, came: "", notes: "Same as the row above – a duplicate on purpose." });
+    return out;
+  }
+
+  /* ----- starting up ----- */
+  function init() {
+    var cfg = null;
+    try { cfg = JSON.parse(lsGet(CFG_KEY) || "null"); } catch (e) {}
+    if (cfg && cfg.url) { state.cfg = cfg; state.mode = "sheets"; return refresh(); }
+    loadDemo(); emit(); return Promise.resolve();
+  }
+  function loadDemo() {
+    var d = null;
+    try { d = JSON.parse(lsGet(DEMO_KEY) || "null"); } catch (e) {}
+    if (!d || !d.events) { d = { events: sampleEvents(), settings: defaultSettings() }; lsSet(DEMO_KEY, JSON.stringify(d)); }
+    state.mode = "demo"; state.events = d.events; state.settings = Object.assign(defaultSettings(), d.settings);
+  }
+  function saveDemo() { lsSet(DEMO_KEY, JSON.stringify({ events: state.events, settings: state.settings })); }
+
+  /* ----- talking to Apps Script ----- */
+  function validUrl(u) { return /^https:\/\/script\.google(usercontent)?\.com\//.test(u || ""); }
+  function remote(action, payload) {
+    var cfg = state.cfg, p;
+    if (action === "load") {
+      p = fetch(cfg.url + (cfg.url.indexOf("?") < 0 ? "?" : "&") + "key=" + encodeURIComponent(cfg.key || ""), { redirect: "follow" });
+    } else {
+      var body = Object.assign({ action: action, key: cfg.key || "" }, payload || {});
+      p = fetch(cfg.url, { method: "POST", redirect: "follow", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body) });
+    }
+    return p.then(function (r) {
+      if (!r.ok) throw new Error("The server answered " + r.status + ".");
+      return r.text();
+    }).then(function (txt) {
+      var j;
+      try { j = JSON.parse(txt); } catch (e) { throw new Error("That link did not answer like the planner. Check that it ends in /exec and access is set to Anyone."); }
+      if (!j.ok) throw new Error(j.error || "The sheet reported an error.");
+      return j;
+    }, function (e) {
+      if (e instanceof TypeError) throw new Error("Could not reach the sheet. Check your internet and the link.");
+      throw e;
+    });
+  }
+  function applyRemote(j) {
+    state.events = j.events || [];
+    state.settings = Object.assign(defaultSettings(), j.settings || {});
+    state.lastSync = new Date();
+  }
+  function refresh() {
+    if (state.mode !== "sheets") return Promise.resolve();
+    state.busy = true; state.error = ""; emit();
+    return remote("load").then(applyRemote).catch(function (e) { state.error = e.message; })
+      .then(function () { state.busy = false; emit(); });
+  }
+  function connect(url, key) {
+    url = (url || "").trim();
+    if (!validUrl(url)) return Promise.reject(new Error("That does not look like an Apps Script link. It should start with https://script.google.com/ and end in /exec."));
+    var prev = state.cfg; state.cfg = { url: url, key: key || "" }; state.busy = true; emit();
+    return remote("load").then(function (j) {
+      state.mode = "sheets"; lsSet(CFG_KEY, JSON.stringify(state.cfg)); applyRemote(j); state.error = ""; state.busy = false; emit();
+      return j;
+    }, function (e) { state.cfg = prev; state.busy = false; emit(); throw e; });
+  }
+  function disconnect() { lsDel(CFG_KEY); state.cfg = { url: "", key: "" }; state.error = ""; loadDemo(); emit(); }
+
+  /* ----- changing data (screen updates first, the sheet catches up; undone if the sheet says no) ----- */
+  function mutate(local, action, payload) {
+    var before = clone({ events: state.events, settings: state.settings });
+    local();
+    state.error = "";
+    if (state.mode === "demo") { saveDemo(); emit(); return Promise.resolve(); }
+    state.busy = true; emit();
+    return remote(action, payload).then(function (j) { applyRemote(j); state.busy = false; emit(); }, function (e) {
+      state.events = before.events; state.settings = before.settings; state.busy = false; state.error = e.message; emit(); throw e;
+    });
+  }
+  function add(ev) { ev = Object.assign({}, ev, { id: ev.id || newId() }); return mutate(function () { state.events = state.events.concat([ev]); }, "add", { event: ev }); }
+  function addMany(list) { list = list.map(function (e) { return Object.assign({}, e, { id: e.id || newId() }); }); return mutate(function () { state.events = state.events.concat(list); }, "addMany", { events: list }); }
+  function update(ev) { return mutate(function () { state.events = state.events.map(function (x) { return x.id === ev.id ? Object.assign({}, ev) : x; }); }, "update", { event: ev }); }
+  function remove(id) { return mutate(function () { state.events = state.events.filter(function (x) { return x.id !== id; }); }, "delete", { id: id }); }
+  function saveSettings(s) { return mutate(function () { state.settings = Object.assign({}, s); }, "saveSettings", { settings: s }); }
+  function resetDemo() { lsDel(DEMO_KEY); loadDemo(); emit(); }
+  function clearDemo() { state.events = []; saveDemo(); emit(); }
+  function sendSamplesToSheet() { return addMany(sampleEvents()); }
+
+  return { state: state, subscribe: subscribe, init: init, refresh: refresh, connect: connect, disconnect: disconnect, add: add, addMany: addMany,
+           update: update, remove: remove, saveSettings: saveSettings, resetDemo: resetDemo, clearDemo: clearDemo, sendSamplesToSheet: sendSamplesToSheet,
+           validUrl: validUrl, sampleEvents: sampleEvents };
+})();
+
+/* charts.js – small hand-made SVG charts (no libraries) */
+var Charts = (function () {
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function niceStep(max) {
+    if (max <= 5) return 1;
+    var raw = max / 4, mag = Math.pow(10, Math.floor(Math.log10(raw))), n = raw / mag;
+    return Math.max(1, (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * mag);
+  }
+  function empty(msg) { return '<div class="empty">' + esc(msg || "Nothing to show yet.") + "</div>"; }
+
+  /* events per month: vertical bars */
+  function months(data) {
+    var max = Math.max.apply(null, data.map(function (d) { return d.n; }));
+    if (!max) return empty("No events in this plan year yet.");
+    var step = niceStep(max), top = Math.ceil(max / step) * step;
+    var W = 640, H = 230, L = 34, R = 8, T = 14, B = 28, pw = W - L - R, ph = H - T - B, bw = pw / data.length;
+    var s = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Events per month">';
+    for (var v = 0; v <= top; v += step) {
+      var y = T + ph - (v / top) * ph;
+      s += '<line class="grid" x1="' + L + '" x2="' + (W - R) + '" y1="' + y + '" y2="' + y + '"/><text class="axis" x="' + (L - 6) + '" y="' + (y + 4) + '" text-anchor="end">' + v + "</text>";
+    }
+    data.forEach(function (d, i) {
+      var h = (d.n / top) * ph, x = L + i * bw + bw * 0.18, w = bw * 0.64;
+      s += '<g><title>' + esc(d.label) + ": " + d.n + (d.n === 1 ? " event" : " events") + '</title><rect class="bar" x="' + x + '" y="' + (T + ph - h) + '" width="' + w + '" height="' + Math.max(h, 0) + '" rx="4"/>';
+      if (d.n) s += '<text class="val" x="' + (x + w / 2) + '" y="' + (T + ph - h - 5) + '" text-anchor="middle">' + d.n + "</text>";
+      s += '<text class="axis" x="' + (x + w / 2) + '" y="' + (H - 9) + '" text-anchor="middle">' + esc(d.label) + "</text></g>";
+    });
+    return s + "</svg>";
+  }
+
+  /* horizontal bars with the label on the left: [{label, n}] */
+  function bars(list) {
+    list = list.filter(function (d) { return d.n > 0; });
+    if (!list.length) return empty();
+    var max = Math.max.apply(null, list.map(function (d) { return d.n; }));
+    return '<div class="hbars">' + list.map(function (d) {
+      return '<div class="hrow" title="' + esc(d.label) + ": " + d.n + '"><span class="hl">' + esc(d.label) + '</span><span class="ht"><i style="width:' + Math.max(3, (d.n / max) * 100) + '%"></i></span><b>' + d.n + "</b></div>";
+    }).join("") + "</div>";
+  }
+
+  /* expected vs came, per committee: [{label, expected, came}] */
+  function pairs(list) {
+    list = list.filter(function (d) { return d.expected > 0 || d.came > 0; });
+    if (!list.length) return empty("Fill in “People Who Came” after events to compare.");
+    var max = Math.max.apply(null, list.map(function (d) { return Math.max(d.expected, d.came); }));
+    return '<div class="hbars pairs">' + list.map(function (d) {
+      var pct = d.expected ? Math.round(d.came / d.expected * 100) + "%" : "";
+      return '<div class="prow"><span class="hl">' + esc(d.label) + '</span><div class="pb">' +
+        '<span class="ht"><i class="exp" style="width:' + Math.max(2, d.expected / max * 100) + '%"></i></span>' +
+        '<span class="ht"><i class="came" style="width:' + Math.max(2, d.came / max * 100) + '%"></i></span></div>' +
+        '<b>' + d.came + " / " + d.expected + (pct ? ' <em>' + pct + "</em>" : "") + "</b></div>";
+    }).join("") + '</div><div class="legend"><span><i class="exp"></i>Expected</span><span><i class="came"></i>Came</span></div>';
+  }
+
+  return { months: months, bars: bars, pairs: pairs, esc: esc, niceStep: niceStep };
+})();
+
+/* app.js – the screens */
+var App = (function () {
+  var esc = Charts.esc, L = Logic, S = Store;
+  var ui = { view: "dashboard", filter: { committee: "", category: "" }, calY: 0, calM: 0, q: "", statusF: "", draft: null, typed: { url: "", key: "" } };
+  var root, dlg, toastTimer, pendingDel = null;
+
+  function $(s, r) { return (r || document).querySelector(s); }
+  function short(c) { var m = /\(([^)]+)\)\s*$/.exec(c || ""); return m ? m[1] : c; }
+  function stCls(s) { return "st-" + String(s).replace(/ /g, ""); }
+  function alCls(a) { return L.isRed(a) ? "al-red" : "al-amber"; }
+  function chip(s) { return '<span class="chip ' + stCls(s) + '">' + esc(s) + "</span>"; }
+  function alertChip(a) { return a ? '<span class="chip ' + alCls(a) + '">' + esc(a) + "</span>" : ""; }
+  function opts(list, cur, blank) {
+    var h = blank != null ? '<option value="">' + esc(blank) + "</option>" : "";
+    var seen = list.slice(); if (cur && seen.indexOf(cur) < 0) seen.push(cur);
+    return h + seen.map(function (o) { return '<option value="' + esc(o) + '"' + (o === cur ? " selected" : "") + ">" + esc(o) + "</option>"; }).join("");
+  }
+  function toast(msg, bad) {
+    var t = $("#toast"); if (!t) { t = document.createElement("div"); t.id = "toast"; t.setAttribute("role", "status"); document.body.appendChild(t); }
+    t.className = "toast" + (bad ? " bad" : ""); t.textContent = msg; t.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.hidden = true; }, bad ? 5000 : 2400);
+  }
+
+  /* ---------------- frame (header + banner) ---------------- */
+  function frame(inner) {
+    var st = S.state, dot = st.busy ? "busy" : st.error ? "err" : st.mode === "sheets" ? "live" : "", text;
+    if (st.busy) text = "Syncing…";
+    else if (st.mode === "sheets") text = st.error ? "Sheet problem" : "Google Sheets · synced " + (st.lastSync ? st.lastSync.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "");
+    else text = "Demo mode · saved in this browser";
+    var tabs = [["dashboard", "Dashboard"], ["monthly", "Monthly View"], ["planner", "Event Planner"], ["settings", "Settings"]];
+    var banner = "";
+    if (st.error) banner = '<div class="banner bad" role="alert"><b>Could not talk to the sheet.</b> ' + esc(st.error) + '<button class="btn small ghost" data-act="retry">Try again</button></div>';
+    else if (st.mode === "demo") banner = '<div class="banner"><b>Demo mode.</b> Your changes stay in this browser. To save to Google Sheets, connect it in Settings.<button class="btn small" data-act="tab" data-v="settings">Connect Google Sheets</button></div>';
+    return '<header class="top"><div class="wrap"><div class="brand"><h1>' + esc(st.settings.orgName || "Event Planner") + '</h1><small>Event Planner &amp; Calendar</small></div>' +
+      '<nav class="tabs" aria-label="Main">' + tabs.map(function (t) { return '<button class="tab" data-act="tab" data-v="' + t[0] + '"' + (ui.view === t[0] ? ' aria-current="page"' : "") + ">" + t[1] + "</button>"; }).join("") + "</nav>" +
+      '<div class="sync"><span class="dot ' + dot + '"></span>' + esc(text) + "</div></div></header>" +
+      '<main><div class="wrap">' + banner + inner + "</div></main>";
+  }
+
+  /* ---------------- Dashboard ---------------- */
+  function dashboard() {
+    var st = S.state, c = L.compute(st.events, st.settings, ui.filter), t = c.tiles;
+    var turn = t.turnout == null ? "–" : Math.round(t.turnout * 100) + "%";
+    var tiles = [
+      ["", "Events in plan", t.total, "in this plan year"],
+      ["b", "Still to do", t.open, "planned, confirmed or in progress"],
+      ["g", "Completed", t.done, "finished events"],
+      ["r", "Needs fixing", t.fix, "fix the red alerts"],
+      ["o", "People expected", t.expected.toLocaleString(), "across all events"],
+      ["t", "Who came vs expected", turn, "compared with what you expected"]
+    ].map(function (x) { return '<div class="tile ' + x[0] + '"><div class="l">' + x[1] + '</div><div class="n">' + x[2] + '</div><div class="d">' + x[3] + "</div></div>"; }).join("");
+
+    var up = c.upcoming.length ? '<ul class="list">' + c.upcoming.map(function (e) {
+      var d = e.daysUntil === 0 ? "Today" : e.daysUntil === 1 ? "Tomorrow" : "In " + e.daysUntil + " days";
+      return '<li><div class="date"><b>' + (+e.date.slice(8)) + "</b><span>" + L.MONTHS[+e.date.slice(5, 7) - 1].slice(0, 3) + '</span></div><div class="main"><b>' + esc(e.name) + "</b><small>" + d + (e.time ? " · " + L.niceTime(e.time) : "") +
+        (e.venue ? " · " + esc(e.venue) : "") + "</small></div>" + chip(e.status) + '<button class="go" data-act="edit" data-id="' + esc(e.id) + '" aria-label="Edit ' + esc(e.name) + '">✎</button></li>';
+    }).join("") + "</ul>" : '<div class="empty">No upcoming events. Add one in the Event Planner.</div>';
+
+    var al = c.alerts.slice().sort(function (a, b) { return (L.isRed(b.alert) - L.isRed(a.alert)) || (a.date < b.date ? -1 : 1); }).slice(0, 10);
+    var alerts = al.length ? '<ul class="list">' + al.map(function (e) {
+      return '<li><div class="main"><b>' + esc(e.name || "(no name)") + "</b><small>" + (e.date ? L.nice(e.date) : "No date") + (e.committee ? " · " + esc(short(e.committee)) : "") + "</small></div>" + alertChip(e.alert) +
+        '<button class="go" data-act="edit" data-id="' + esc(e.id) + '" aria-label="Fix ' + esc(e.name) + '">✎</button></li>';
+    }).join("") + "</ul>" + (c.alerts.length > 10 ? '<div class="hint">Showing 10 of ' + c.alerts.length + " alerts.</div>" : "") : '<div class="empty">All clear. Nothing needs your attention. 🎉</div>';
+
+    var total = L.STATUSES.reduce(function (a, s) { return a + c.status[s]; }, 0);
+    var sbar = total ? '<div class="statusbar" role="img" aria-label="Events by status">' + L.STATUSES.map(function (s) { return c.status[s] ? '<span class="sb-' + s.replace(/ /g, "") + '" style="width:' + c.status[s] / total * 100 + '%" title="' + s + ": " + c.status[s] + '"></span>' : ""; }).join("") + "</div>" +
+      '<div class="slegend">' + L.STATUSES.map(function (s) { return '<span><i class="sb-' + s.replace(/ /g, "") + '"></i>' + s + " <b>" + c.status[s] + "</b></span>"; }).join("") + "</div>" : '<div class="empty">No events yet.</div>';
+
+    var cats = Object.keys(c.byCat).map(function (k) { return { label: k, n: c.byCat[k] }; }).sort(function (a, b) { return b.n - a.n; });
+    var coms = Object.keys(c.byCom).map(function (k) { return { label: short(k), n: c.byCom[k].n, expected: c.byCom[k].expected, came: c.byCom[k].came }; }).sort(function (a, b) { return b.n - a.n; });
+
+    var f = '<div class="toolbar"><div class="f"><label for="fc">Committee</label><select id="fc" data-filter="committee">' + opts(st.settings.committees, ui.filter.committee, "All committees") + "</select></div>" +
+      '<div class="f"><label for="fk">Category</label><select id="fk" data-filter="category">' + opts(st.settings.categories, ui.filter.category, "All categories") + "</select></div>" +
+      (ui.filter.committee || ui.filter.category ? '<button class="btn ghost" data-act="clearfilter">Clear filters</button>' : "") + "</div>";
+
+    return '<div class="pagehead"><h2>Dashboard</h2><span class="sub">As of ' + L.nice(c.asOf) + " · Plan year " + L.nice(c.range.start) + " to " + L.nice(c.range.end) + "</span></div>" + f +
+      '<div class="tiles">' + tiles + "</div>" +
+      '<div class="grid2"><section class="card"><h2>Events per month</h2>' + Charts.months(c.months) + '</section><section class="card"><h2>Coming up next <small>next 8 events</small></h2>' + up + "</section></div>" +
+      '<div class="grid2" style="margin-top:16px"><section class="card"><h2>Needs attention</h2>' + alerts + '</section><section class="card stack"><div><h2>Events by status</h2>' + sbar + "</div><div><h2>Events by category</h2>" + Charts.bars(cats) + "</div></section></div>" +
+      '<div class="grid2" style="margin-top:16px"><section class="card"><h2>Events by committee</h2>' + Charts.bars(coms) + '</section><section class="card"><h2>Who came vs expected <small>by committee</small></h2>' + Charts.pairs(coms) + "</section></div>";
+  }
+
+  /* ---------------- Monthly View ---------------- */
+  function monthly() {
+    var st = S.state;
+    if (!ui.calY) { var a = L.asOf(st.settings); ui.calY = +a.slice(0, 4); ui.calM = +a.slice(5, 7) - 1; }
+    var cal = L.calendar(st.events, st.settings, ui.calY, ui.calM);
+    var cells = cal.cells.map(function (d) {
+      var shown = d.events.length > 3 ? d.events.slice(0, 2) : d.events, more = d.events.length - shown.length;
+      return '<div class="day' + (d.outside ? " out" : "") + (d.today ? " today" : "") + '" role="button" tabindex="0" data-act="day" data-date="' + d.date + '" aria-label="' + L.nice(d.date) + ", " + d.events.length + ' events">' +
+        '<span class="num">' + d.day + "</span>" + shown.map(function (e) {
+          return '<span class="evt ' + stCls(e.status) + '" data-act="edit" data-id="' + esc(e.id) + '" title="' + esc(e.name + (e.time ? " · " + L.niceTime(e.time) : "") + " · " + e.status) + '">' + esc((e.time ? L.niceTime(e.time).replace(":00", "") + " " : "") + e.name) + "</span>";
+        }).join("") + (more > 0 ? '<span class="more">+' + more + " more events</span>" : "") + "</div>";
+    }).join("");
+    return '<div class="pagehead"><h2>Monthly View</h2><span class="sub">Click a day to see or add events</span></div>' +
+      '<div class="toolbar"><button class="btn ghost" data-act="prev" aria-label="Previous month">‹ Prev</button><h2 style="min-width:170px;text-align:center;color:var(--navy)">' + L.MONTHS[ui.calM] + " " + ui.calY + '</h2><button class="btn ghost" data-act="next" aria-label="Next month">Next ›</button>' +
+      '<button class="btn ghost" data-act="thismonth">Today</button><span class="grow"></span><button class="btn orange" data-act="add">+ Add event</button></div>' +
+      '<div class="cal"><div class="cal-head">' + cal.heads.map(function (h) { return "<div>" + h + "</div>"; }).join("") + '</div><div class="cal-grid">' + cells + "</div></div>" +
+      '<div class="legendrow">' + L.STATUSES.filter(function (s) { return s !== "Cancelled"; }).map(chip).join("") + '<span class="hint">Cancelled events are hidden here.</span></div>';
+  }
+
+  /* ---------------- Event Planner ---------------- */
+  function plannerRows() {
+    var st = S.state, q = ui.q.trim().toLowerCase();
+    var rows = L.annotate(st.events, st.settings).filter(function (e) {
+      if (ui.statusF && e.status !== ui.statusF) return false;
+      if (!q) return true;
+      return [e.name, e.category, e.venue, e.committee, e.notes].join(" ").toLowerCase().indexOf(q) >= 0;
+    });
+    rows.sort(function (a, b) { if (!a.date !== !b.date) return a.date ? -1 : 1; return a.date < b.date ? -1 : a.date > b.date ? 1 : a.row - b.row; });
+    return rows;
+  }
+  function plannerTable() {
+    var rows = plannerRows();
+    if (!rows.length) return '<div class="empty">' + (S.state.events.length ? "No events match your search." : "No events yet. Click “Add event” to start.") + "</div>";
+    return '<div class="tablewrap"><table><thead><tr><th>Event</th><th>Category</th><th>Date</th><th>Time</th><th>Venue</th><th>Committee</th><th>Status</th><th class="num">Expected</th><th class="num">Came</th><th class="num">Days until</th><th>Alert</th><th></th></tr></thead><tbody>' +
+      rows.map(function (e) {
+        return '<tr class="' + (e.status === "Cancelled" ? "cancelled" : "") + '"><td><b>' + esc(e.name || "(no name)") + "</b></td><td>" + esc(e.category) + "</td><td class=\"nw\">" + (e.date ? L.nice(e.date) : "") + "</td><td class=\"nw\">" + L.niceTime(e.time) + "</td><td>" + esc(e.venue) + "</td><td>" + esc(short(e.committee)) +
+          "</td><td>" + chip(e.status) + '</td><td class="num">' + esc(e.expected) + '</td><td class="num">' + esc(e.came) + '</td><td class="num">' + (e.daysUntil == null ? "" : e.daysUntil) + "</td><td>" + alertChip(e.alert) +
+          '</td><td><div class="rowbtns"><button class="btn small ghost" data-act="edit" data-id="' + esc(e.id) + '">Edit</button><button class="btn small danger" data-act="del" data-id="' + esc(e.id) + '">Delete</button></div></td></tr>';
+      }).join("") + "</tbody></table></div>";
+  }
+  function planner() {
+    return '<div class="pagehead"><h2>Event Planner</h2><span class="sub">' + S.state.events.length + ' events</span></div>' +
+      '<div class="toolbar"><div class="f"><label for="q">Search</label><input id="q" type="search" placeholder="Name, venue, committee…" value="' + esc(ui.q) + '"></div>' +
+      '<div class="f" style="max-width:200px;min-width:140px"><label for="sf">Status</label><select id="sf">' + opts(L.STATUSES, ui.statusF, "All statuses") + "</select></div>" +
+      '<span class="grow"></span><button class="btn ghost" data-act="csv">Export CSV</button><button class="btn orange" data-act="add">+ Add event</button></div><div id="ptable">' + plannerTable() + "</div>";
+  }
+
+  /* ---------------- Settings ---------------- */
+  function settings() {
+    var st = S.state, d = ui.draft || (ui.draft = JSON.parse(JSON.stringify(st.settings))), live = st.mode === "sheets";
+    var conn = '<section class="card"><h2>Connection <small>' + (live ? "Connected to Google Sheets" : "Demo mode") + "</small></h2>";
+    if (live) {
+      conn += '<p>Your events are saved in your Google Sheet. Anyone you share this page with can use the same link.</p><div class="toolbar"><button class="btn ghost" data-act="retry">Refresh from sheet</button>' +
+        '<button class="btn ghost" data-act="addsamples">Add sample events to my sheet</button><button class="btn danger" data-act="disconnect">Disconnect</button></div><div class="hint">Connected link: ' + esc(st.cfg.url.slice(0, 60)) + "…</div>";
+    } else {
+      conn += '<ol style="margin:0 0 12px;padding-left:20px"><li>Make a new Google Sheet, then <b>Extensions › Apps Script</b>.</li><li>Paste in the <b>Code.gs</b> file, pick <b>setup</b>, press <b>Run</b>.</li><li><b>Deploy › New deployment › Web app</b>. Execute as <b>Me</b>, access <b>Anyone</b>.</li><li>Copy the Web app link and paste it below.</li></ol>' +
+        '<div class="form"><div class="full"><label for="url">Web app link</label><input id="url" class="y" placeholder="https://script.google.com/macros/s/…/exec" value="' + esc(ui.typed.url) + '" autocomplete="off"></div>' +
+        '<div class="full"><label for="key">Access key <small style="font-weight:400">(only if you set one in Code.gs)</small></label><input id="key" class="y" type="password" value="' + esc(ui.typed.key) + '" autocomplete="off"></div></div>' +
+        '<div class="toolbar" style="margin:12px 0 0"><button class="btn orange" data-act="connect"' + (st.busy ? " disabled" : "") + ">" + (st.busy ? "Connecting…" : "Connect") + '</button><button class="btn ghost" data-act="resetdemo">Reset demo data</button><button class="btn ghost" data-act="cleardemo">Clear all demo events</button></div>';
+    }
+    conn += "</section>";
+    var plan = '<section class="card"><h2>Plan</h2><div class="form"><div class="full"><label for="s-org">Organization name</label><input id="s-org" class="y" data-s="orgName" value="' + esc(d.orgName) + '"></div>' +
+      '<div><label for="s-start">First month of plan year</label><input id="s-start" class="y" type="month" data-s="planStart" value="' + esc((d.planStart || "").slice(0, 7)) + '"></div>' +
+      '<div><label for="s-wk">Week starts on</label><select id="s-wk" class="y" data-s="weekStart"><option' + (d.weekStart === "Sunday" ? " selected" : "") + ">Sunday</option><option" + (d.weekStart === "Monday" ? " selected" : "") + ">Monday</option></select></div>" +
+      '<div><label for="s-al">Warn me this many days ahead</label><input id="s-al" class="y" type="number" min="0" max="60" data-s="alertDays" value="' + esc(d.alertDays) + '"></div>' +
+      '<div><label for="s-as">Pretend today is <small style="font-weight:400">(optional)</small></label><input id="s-as" class="y" type="date" data-s="asOf" value="' + esc(d.asOf) + '"><div class="hint">Leave empty to use the real date.</div></div></div></section>';
+    var lists = '<section class="card"><h2>Categories &amp; committees <small>one per line, up to 10 each</small></h2><div class="form"><div><label for="s-cat">Categories</label><textarea id="s-cat" class="y" rows="10" data-s="categories">' + esc(d.categories.join("\n")) + '</textarea></div>' +
+      '<div><label for="s-com">Committees</label><textarea id="s-com" class="y" rows="10" data-s="committees">' + esc(d.committees.join("\n")) + "</textarea></div></div></section>";
+    return '<div class="pagehead"><h2>Settings</h2></div><div class="stack">' + conn + plan + lists + '<div><button class="btn orange" data-act="savesettings"' + (st.busy ? " disabled" : "") + ">Save settings</button> <button class=\"btn ghost\" data-act=\"revert\">Undo changes</button></div></div>";
+  }
+
+  /* ---------------- drawing ---------------- */
+  var lastMode = "demo";
+  function draw() {
+    pendingDel = null; lastMode = S.state.mode;
+    var active = document.activeElement, id = active && active.id, selS, selE;
+    if (id && /^(q|url|key|s-)/.test(id)) { selS = active.selectionStart; selE = active.selectionEnd; } else id = null;
+    var inner = ui.view === "dashboard" ? dashboard() : ui.view === "monthly" ? monthly() : ui.view === "planner" ? planner() : settings();
+    root.innerHTML = frame(inner);
+    if (id) { var el = document.getElementById(id); if (el) { el.focus(); try { if (selS != null) el.setSelectionRange(selS, selE); } catch (e) {} } }
+  }
+
+  /* ---------------- dialogs ---------------- */
+  function openDialog(title, body, footer) {
+    dlg.innerHTML = '<div class="dlg-h"><h3>' + title + '</h3><button data-act="close" aria-label="Close">×</button></div><div class="dlg-b">' + body + '</div><div class="dlg-f">' + footer + "</div>";
+    if (!dlg.open) dlg.showModal();
+  }
+  function closeDialog() { if (dlg.open) dlg.close(); }
+
+  function eventForm(ev, isNew) {
+    var s = S.state.settings;
+    openDialog(isNew ? "Add event" : "Edit event",
+      '<form id="evform" class="form" novalidate data-id="' + esc(ev.id || "") + '"><div class="full"><label for="f-name">Event name *</label><input id="f-name" name="name" class="y" value="' + esc(ev.name) + '" autocomplete="off"><div class="err" data-e="name"></div></div>' +
+      '<div><label for="f-cat">Category</label><select id="f-cat" name="category" class="y">' + opts(s.categories, ev.category, "Choose…") + "</select></div>" +
+      '<div><label for="f-com">Committee</label><select id="f-com" name="committee" class="y">' + opts(s.committees, ev.committee, "Choose…") + "</select></div>" +
+      '<div><label for="f-date">Date *</label><input id="f-date" name="date" type="date" class="y" value="' + esc(ev.date) + '"><div class="err" data-e="date"></div></div>' +
+      '<div><label for="f-time">Start time</label><input id="f-time" name="time" type="time" class="y" value="' + esc(ev.time) + '"></div>' +
+      '<div><label for="f-venue">Venue</label><input id="f-venue" name="venue" class="y" value="' + esc(ev.venue) + '"></div>' +
+      '<div><label for="f-status">Status</label><select id="f-status" name="status" class="y">' + opts(L.STATUSES, ev.status) + "</select></div>" +
+      '<div><label for="f-exp">People expected</label><input id="f-exp" name="expected" inputmode="numeric" class="y" value="' + esc(ev.expected) + '"><div class="err" data-e="expected"></div></div>' +
+      '<div><label for="f-came">People who came</label><input id="f-came" name="came" inputmode="numeric" class="y" value="' + esc(ev.came) + '"><div class="err" data-e="came"></div><div class="hint">Fill in after the event.</div></div>' +
+      '<div class="full"><label for="f-notes">Notes</label><textarea id="f-notes" name="notes" class="y">' + esc(ev.notes) + "</textarea></div></form>",
+      (isNew ? "" : '<button class="btn danger left" data-act="del" data-id="' + esc(ev.id) + '" type="button">Delete</button>') + '<button class="btn ghost" data-act="close" type="button">Cancel</button><button class="btn orange" data-act="saveevent" type="button">' + (isNew ? "Add event" : "Save changes") + "</button>");
+    setTimeout(function () { var n = $("#f-name"); if (n) n.focus(); }, 30);
+  }
+  function blank(date) { return { id: "", name: "", category: "", date: date || "", time: "", venue: "", committee: "", status: "Planned", expected: "", came: "", notes: "" }; }
+  function readForm() {
+    var f = $("#evform"), o = { id: f.dataset.id };
+    Array.prototype.forEach.call(f.elements, function (el) { if (el.name) o[el.name] = el.value.trim(); });
+    return o;
+  }
+  function saveEvent() {
+    var o = readForm(), err = L.validate(o), btn = $('[data-act="saveevent"]');
+    Array.prototype.forEach.call(dlg.querySelectorAll("[data-e]"), function (n) { n.textContent = err[n.dataset.e] || ""; });
+    if (Object.keys(err).length) { var first = $("[data-e]:not(:empty)"); if (first) first.parentNode.querySelector("input,select").focus(); return; }
+    o.expected = o.expected === "" ? "" : +o.expected; o.came = o.came === "" ? "" : +o.came;
+    var isNew = !o.id; btn.disabled = true; btn.textContent = "Saving…";
+    (isNew ? S.add(o) : S.update(o)).then(function () { closeDialog(); toast(isNew ? "Event added." : "Changes saved."); }, function (e) {
+      btn.disabled = false; btn.textContent = isNew ? "Add event" : "Save changes"; toast("Not saved: " + e.message, true);
+    });
+  }
+  function dayDialog(date) {
+    var list = S.state.events.filter(function (e) { return e.date === date; });
+    openDialog(L.nice(date), list.length ? '<ul class="list">' + list.map(function (e) {
+      return '<li><div class="main"><b>' + esc(e.name) + "</b><small>" + (e.time ? L.niceTime(e.time) + " · " : "") + esc(e.venue || "No venue") + (e.committee ? " · " + esc(short(e.committee)) : "") + "</small></div>" + chip(e.status) + '<button class="btn small ghost" data-act="edit" data-id="' + esc(e.id) + '">Edit</button></li>';
+    }).join("") + "</ul>" : '<div class="empty">No events on this day.</div>', '<button class="btn ghost" data-act="close">Close</button><button class="btn orange" data-act="add" data-date="' + date + '">+ Add event on this day</button>');
+  }
+  function del(id, btn) {
+    if (pendingDel !== id) { // two-step delete so nobody removes an event by accident
+      pendingDel = id; var o = btn.textContent; btn.textContent = "Click again to delete"; btn.dataset.o = o;
+      setTimeout(function () { if (pendingDel === id) { pendingDel = null; if (btn.isConnected) btn.textContent = btn.dataset.o || "Delete"; } }, 3500); return;
+    }
+    pendingDel = null; btn.disabled = true;
+    S.remove(id).then(function () { closeDialog(); toast("Event deleted."); }, function (e) { btn.disabled = false; toast("Not deleted: " + e.message, true); });
+  }
+
+  /* ---------------- actions ---------------- */
+  function csv() {
+    var cols = [["Event Name", "name"], ["Category", "category"], ["Date", "date"], ["Start Time", "time"], ["Venue", "venue"], ["Committee", "committee"], ["Status", "status"], ["People Expected", "expected"], ["People Who Came", "came"], ["Notes", "notes"]];
+    var q = function (v) { v = String(v == null ? "" : v); if (/^[=+\-@]/.test(v)) v = "'" + v; return '"' + v.replace(/"/g, '""') + '"'; };
+    var text = cols.map(function (c) { return q(c[0]); }).join(",") + "\n" + plannerRows().map(function (e) { return cols.map(function (c) { return q(e[c[1]]); }).join(","); }).join("\n");
+    var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["﻿" + text], { type: "text/csv" })); a.download = "events.csv"; document.body.appendChild(a); a.click(); a.remove();
+  }
+  function collectDraft() {
+    var d = ui.draft || {};
+    Array.prototype.forEach.call(root.querySelectorAll("[data-s]"), function (el) {
+      var k = el.dataset.s, v = el.value;
+      if (k === "categories" || k === "committees") d[k] = v.split("\n").map(function (x) { return x.trim(); }).filter(Boolean).slice(0, 10);
+      else if (k === "planStart") d[k] = v ? v + "-01" : "";
+      else if (k === "alertDays") d[k] = v === "" ? 7 : Math.max(0, Math.round(+v));
+      else d[k] = v;
+    });
+    ui.draft = d; return d;
+  }
+  function act(el, e) {
+    var a = el.dataset.act, id = el.dataset.id;
+    switch (a) {
+      case "tab": ui.view = el.dataset.v; if (ui.view === "settings") ui.draft = null; draw(); window.scrollTo(0, 0); break;
+      case "retry": S.refresh(); break;
+      case "clearfilter": ui.filter = { committee: "", category: "" }; draw(); break;
+      case "prev": ui.calM--; if (ui.calM < 0) { ui.calM = 11; ui.calY--; } draw(); break;
+      case "next": ui.calM++; if (ui.calM > 11) { ui.calM = 0; ui.calY++; } draw(); break;
+      case "thismonth": ui.calY = 0; draw(); break;
+      case "add": eventForm(blank(el.dataset.date || ""), true); break;
+      case "edit": var ev = S.state.events.filter(function (x) { return x.id === id; })[0]; if (ev) eventForm(ev, false); break;
+      case "day": dayDialog(el.dataset.date); break;
+      case "close": closeDialog(); break;
+      case "saveevent": saveEvent(); break;
+      case "del": del(id, el); break;
+      case "csv": csv(); break;
+      case "connect":
+        ui.typed = { url: $("#url").value, key: $("#key").value };
+        S.connect(ui.typed.url, ui.typed.key).then(function () { ui.typed = { url: "", key: "" }; ui.draft = null; toast("Connected to Google Sheets."); }, function (er) { toast(er.message, true); });
+        break;
+      case "disconnect": if (confirm("Disconnect from Google Sheets? Your sheet keeps all its data.")) { S.disconnect(); ui.draft = null; } break;
+      case "resetdemo": if (confirm("Put the sample events back?")) { S.resetDemo(); ui.draft = null; toast("Sample data restored."); } break;
+      case "cleardemo": if (confirm("Remove every demo event?")) { S.clearDemo(); toast("Demo events cleared."); } break;
+      case "addsamples": if (confirm("Add " + S.sampleEvents().length + " sample events to your sheet?")) S.sendSamplesToSheet().then(function () { toast("Sample events added."); }, function (er) { toast(er.message, true); }); break;
+      case "revert": ui.draft = null; draw(); break;
+      case "savesettings":
+        var d = collectDraft(); if (!d.orgName.trim()) { toast("Give your organization a name.", true); return; }
+        if (!d.categories.length || !d.committees.length) { toast("Keep at least one category and one committee.", true); return; }
+        S.saveSettings(d).then(function () { ui.draft = null; toast("Settings saved."); }, function (er) { toast("Not saved: " + er.message, true); });
+        break;
+    }
+  }
+
+  function init() {
+    root = $("#app");
+    dlg = document.createElement("dialog"); document.body.appendChild(dlg);
+    dlg.addEventListener("click", function (e) { if (e.target === dlg) closeDialog(); });
+    document.addEventListener("click", function (e) { var el = e.target.closest("[data-act]"); if (el) act(el, e); });
+    document.addEventListener("keydown", function (e) {
+      if ((e.key === "Enter" || e.key === " ") && e.target.classList && e.target.classList.contains("day")) { e.preventDefault(); act(e.target, e); }
+      else if (e.key === "Enter" && e.target.closest && e.target.closest("#evform") && e.target.tagName !== "TEXTAREA") { e.preventDefault(); saveEvent(); }
+    });
+    document.addEventListener("input", function (e) {
+      if (e.target.id === "q") { ui.q = e.target.value; $("#ptable").innerHTML = plannerTable(); }
+      else if (e.target.id === "url" || e.target.id === "key") ui.typed[e.target.id] = e.target.value;
+      else if (e.target.dataset && e.target.dataset.s) collectDraft();
+    });
+    document.addEventListener("change", function (e) {
+      var t = e.target;
+      if (t.dataset && t.dataset.filter) { ui.filter[t.dataset.filter] = t.value; draw(); }
+      else if (t.id === "sf") { ui.statusF = t.value; draw(); }
+    });
+    S.subscribe(function () {
+      if (ui.view === "settings" && document.activeElement && /^(url|key|s-)/.test(document.activeElement.id || "") && !S.state.busy && S.state.mode === lastMode) return;
+      draw();
+    });
+    S.init();
+  }
+  return { init: init, ui: ui };
+})();
+document.addEventListener("DOMContentLoaded", App.init);
+
+</script>
+</body>
+</html>
