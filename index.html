@@ -190,6 +190,14 @@ dialog::backdrop{background:rgba(20,28,55,.5)}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important}}
 
+
+/* Site footer – displayed on every view */
+body{min-height:100vh;display:flex;flex-direction:column}
+#app{flex:1;display:flex;flex-direction:column}
+#app main{flex:1}
+.site-footer{background:var(--navy);color:#fff;text-align:center;padding:18px 12px;border-top:4px solid var(--orange);font-size:13px;margin-top:auto}
+.site-footer p{margin:3px 0}
+
 </style>
 </head>
 <body>
@@ -640,7 +648,11 @@ var App = (function () {
     return '<header class="top"><div class="wrap"><div class="brand"><h1>' + esc(st.settings.orgName || "Event Planner") + '</h1><small>Event Planner &amp; Calendar</small></div>' +
       '<nav class="tabs" aria-label="Main">' + tabs.map(function (t) { return '<button class="tab" data-act="tab" data-v="' + t[0] + '"' + (ui.view === t[0] ? ' aria-current="page"' : "") + ">" + t[1] + "</button>"; }).join("") + "</nav>" +
       '<div class="sync"><span class="dot ' + dot + '"></span>' + esc(text) + "</div></div></header>" +
-      '<main><div class="wrap">' + banner + inner + "</div></main>";
+      '<main><div class="wrap">' + banner + inner + '</div></main>' +
+      '<footer class="site-footer">' +
+      '<p>Developed by the <strong>Information Systems Society</strong></p>' +
+      '<p>Academic Year 2026–2027 | SLSU–Maasin City Campus</p>' +
+      '</footer>';
   }
 
   /* ---------------- Dashboard ---------------- */
