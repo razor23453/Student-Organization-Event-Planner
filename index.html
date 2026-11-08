@@ -577,7 +577,7 @@ var App = (function () {
     if (officerUnlocked) { callback(); return; }
     afterOfficerLogin = callback;
     openDialog("Officers Only",
-      '<p style="margin:0 0 14px">Enter the shared organization officers password to continue.</p>' +
+      '<p style="margin:0 0 14px">Enter the password to continue.</p>' +
       '<label for="officer-password">Password</label>' +
       '<input id="officer-password" type="password" autocomplete="off" placeholder="Enter password" aria-describedby="officer-error">' +
       '<div id="officer-error" class="err" role="alert" aria-live="polite"></div>',
