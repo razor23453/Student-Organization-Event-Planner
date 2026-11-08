@@ -369,7 +369,7 @@ var Store = (function () {
   function emit() { listeners.forEach(function (f) { try { f(state); } catch (e) { console.error(e); } }); }
   function subscribe(f) { listeners.push(f); }
   function defaultSettings() {
-    return { orgName: "My Student Organization", planStart: Logic.addMonths(Logic.todayISO(), -5), weekStart: "Sunday", alertDays: 7, asOf: "",
+    return { orgName: "SLSU-MCC Student Calendar of Activities", planStart: Logic.addMonths(Logic.todayISO(), -5), weekStart: "Sunday", alertDays: 7, asOf: "",
              categories: DEFAULT_CATEGORIES.slice(), committees: DEFAULT_COMMITTEES.slice() };
   }
   function newId() { return "E" + Math.random().toString(36).slice(2, 10); }
