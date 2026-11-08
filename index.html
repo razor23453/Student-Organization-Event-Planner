@@ -568,6 +568,48 @@ var App = (function () {
   var ui = { view: "dashboard", filter: { committee: "", category: "" }, calY: 0, calM: 0, q: "", statusF: "", draft: null, typed: { url: "", key: "" } };
   var root, dlg, toastTimer, pendingDel = null;
 
+  /* Officer-only interface gate (client-side only; not server-side security). */
+  var OFFICER_PASSWORD = "#oneslsuMCC";
+  var officerUnlocked = false;
+  var afterOfficerLogin = null;
+
+  function requestOfficerAccess(callback) {
+    if (officerUnlocked) { callback(); return; }
+    afterOfficerLogin = callback;
+    openDialog("Officers Only",
+      '<p style="margin:0 0 14px">Enter the shared organization officers password to continue.</p>' +
+      '<label for="officer-password">Password</label>' +
+      '<input id="officer-password" type="password" autocomplete="off" placeholder="Enter password" aria-describedby="officer-error">' +
+      '<div id="officer-error" class="err" role="alert" aria-live="polite"></div>',
+      '<button class="btn ghost" data-act="officercancel">Cancel</button>' +
+      '<button class="btn orange" data-act="officerlogin">Unlock</button>');
+    setTimeout(function () { var field = $("#officer-password"); if (field) field.focus(); }, 30);
+  }
+
+  function cancelOfficerAccess() {
+    afterOfficerLogin = null;
+    closeDialog();
+    ui.view = "dashboard";
+    draw();
+  }
+
+  function unlockOfficerAccess() {
+    var field = $("#officer-password");
+    if (!field) return;
+    if (field.value !== OFFICER_PASSWORD) {
+      var err = $("#officer-error");
+      if (err) err.textContent = "Incorrect password. Please try again.";
+      field.value = "";
+      field.focus();
+      return;
+    }
+    officerUnlocked = true;
+    var action = afterOfficerLogin;
+    afterOfficerLogin = null;
+    closeDialog();
+    if (action) action();
+  }
+
   function $(s, r) { return (r || document).querySelector(s); }
   function short(c) { var m = /\(([^)]+)\)\s*$/.exec(c || ""); return m ? m[1] : c; }
   function stCls(s) { return "st-" + String(s).replace(/ /g, ""); }
@@ -718,6 +760,7 @@ var App = (function () {
   /* ---------------- drawing ---------------- */
   var lastMode = "demo";
   function draw() {
+    if (!officerUnlocked && (ui.view === "planner" || ui.view === "settings")) ui.view = "dashboard";
     pendingDel = null; lastMode = S.state.mode;
     var active = document.activeElement, id = active && active.id, selS, selE;
     if (id && /^(q|url|key|s-)/.test(id)) { selS = active.selectionStart; selE = active.selectionEnd; } else id = null;
@@ -800,7 +843,20 @@ var App = (function () {
   }
   function act(el, e) {
     var a = el.dataset.act, id = el.dataset.id;
+    /* Direct navigation, including the demo-mode Settings link, is password gated. */
+    if (a === "tab" && (el.dataset.v === "planner" || el.dataset.v === "settings") && !officerUnlocked) {
+      requestOfficerAccess(function () { ui.view = el.dataset.v; if (ui.view === "settings") ui.draft = null; draw(); window.scrollTo(0, 0); });
+      return;
+    }
+    /* Dashboard and calendar edit/add links must not bypass the password. */
+    var officerActions = ["add", "edit", "saveevent", "del", "connect", "disconnect", "resetdemo", "cleardemo", "addsamples", "revert", "savesettings", "csv"];
+    if (officerActions.indexOf(a) !== -1 && !officerUnlocked) {
+      requestOfficerAccess(function () { act(el, e); });
+      return;
+    }
     switch (a) {
+      case "officerlogin": unlockOfficerAccess(); break;
+      case "officercancel": cancelOfficerAccess(); break;
       case "tab": ui.view = el.dataset.v; if (ui.view === "settings") ui.draft = null; draw(); window.scrollTo(0, 0); break;
       case "retry": S.refresh(); break;
       case "clearfilter": ui.filter = { committee: "", category: "" }; draw(); break;
@@ -810,7 +866,7 @@ var App = (function () {
       case "add": eventForm(blank(el.dataset.date || ""), true); break;
       case "edit": var ev = S.state.events.filter(function (x) { return x.id === id; })[0]; if (ev) eventForm(ev, false); break;
       case "day": dayDialog(el.dataset.date); break;
-      case "close": closeDialog(); break;
+      case "close": if (afterOfficerLogin) cancelOfficerAccess(); else closeDialog(); break;
       case "saveevent": saveEvent(); break;
       case "del": del(id, el); break;
       case "csv": csv(); break;
@@ -834,9 +890,11 @@ var App = (function () {
   function init() {
     root = $("#app");
     dlg = document.createElement("dialog"); document.body.appendChild(dlg);
-    dlg.addEventListener("click", function (e) { if (e.target === dlg) closeDialog(); });
+    dlg.addEventListener("click", function (e) { if (e.target === dlg) { if (afterOfficerLogin) cancelOfficerAccess(); else closeDialog(); } });
+    dlg.addEventListener("cancel", function (e) { if (afterOfficerLogin) { e.preventDefault(); cancelOfficerAccess(); } });
     document.addEventListener("click", function (e) { var el = e.target.closest("[data-act]"); if (el) act(el, e); });
     document.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" && e.target.id === "officer-password") { e.preventDefault(); unlockOfficerAccess(); return; }
       if ((e.key === "Enter" || e.key === " ") && e.target.classList && e.target.classList.contains("day")) { e.preventDefault(); act(e.target, e); }
       else if (e.key === "Enter" && e.target.closest && e.target.closest("#evform") && e.target.tagName !== "TEXTAREA") { e.preventDefault(); saveEvent(); }
     });
