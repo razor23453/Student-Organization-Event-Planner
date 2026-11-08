@@ -1,1 +1,1 @@
-# Student-Organization-Event-Planner
+### Student-Organization-Event-Planner
